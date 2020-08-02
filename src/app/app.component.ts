@@ -1,30 +1,68 @@
 import { Component } from '@angular/core';
-import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormGroup } from '@angular/forms';
+import { FormlyFieldConfig } from '@ngx-formly/core';
+import { DataService } from './core/data.service';
+import { switchMap, startWith } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html'
 })
 export class AppComponent {
- form = new FormGroup({});
- model = {
-   firstName: 'Juri',
-   age: 34
- };
- fields: FormlyFieldConfig[] = [
-   {
+  form = new FormGroup({});
+  model = {
+    firstname: 'Juri',
+    age: 34,
+    nationId: 1,
+    cityId: 1
+  };
+  fields: FormlyFieldConfig[] = [
+    {
       key: 'firstname',
       type: 'input',
       templateOptions: {
         label: 'Firstname'
       }
+    },
+    {
+      key: 'age',
+      type: 'input',
+      templateOptions: {
+        type: 'number',
+        label: 'Age'
+      }
+    },
+    {
+      key: 'nationId',
+      type: 'select', // <select>
+      templateOptions: {
+        label: 'Nation',
+        options: this.dataService.getNations()
+      }
+    },
+    {
+      key: 'cityId',
+      type: 'select', // <select>
+      templateOptions: {
+        label: 'Cities',
+        options: []
+      },
+      hooks: {
+        onInit: (field: FormlyFieldConfig) => {
+          field.templateOptions.options = field.form
+            .get('nationId')
+            .valueChanges.pipe(
+              startWith(this.model.nationId),
+              switchMap(nationId => this.dataService.getCities(nationId))
+            );
+        }
+      }
+    }
+  ];
 
-   }
+  constructor(private dataService: DataService) {}
 
- ];
-
- onSubmmit({valid, value}){
-   console.log(value);
- }
+  onSubmit({ valid, value }) {
+    console.log(value);
+  }
 }
